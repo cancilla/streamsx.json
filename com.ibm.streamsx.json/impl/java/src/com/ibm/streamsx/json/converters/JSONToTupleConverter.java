@@ -16,8 +16,10 @@ import com.ibm.streams.operator.Attribute;
 import com.ibm.streams.operator.StreamSchema;
 import com.ibm.streams.operator.Tuple;
 import com.ibm.streams.operator.Type;
+import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.logging.TraceLevel;
 import com.ibm.streams.operator.meta.CollectionType;
+import com.ibm.streams.operator.meta.MapType;
 import com.ibm.streams.operator.meta.TupleType;
 import com.ibm.streams.operator.types.RString;
 import com.ibm.streams.operator.types.Timestamp;
@@ -124,6 +126,7 @@ public class JSONToTupleConverter {
 				//TODO -- not yet supported types
 			case BLOB:
 			case MAP:
+				return jsonMapToJavaMap(name, type, jsonObj);
 			case BMAP:
 			case COMPLEX32:
 			case COMPLEX64:
@@ -268,10 +271,10 @@ public class JSONToTupleConverter {
 				Object obj =jsonToAttribute(cname, ctype.getElementType(), jsonObj, ptype);
 				if(obj != null) 
 					lst.add((String)obj);
-			}
 			return lst.toArray(new String[lst.size()]);
 		} 
 
+		}
 		case BSTRING:
 		case RSTRING:
 		{
@@ -359,8 +362,8 @@ public class JSONToTupleConverter {
 	 * 
 	 * @param jbase JSON value that is being converted
 	 * @param schema Schema of the SPL tuple
-	 * @return Value converted to SPL tuple with the specified {@code schema} 
 	 * @throws Exception If there was a problem converting the JSONObject.
+	 * @return Value converted to SPL tuple with the specified {@code schema} 
 	 */
 	public static Tuple jsonToTuple(JSONObject jbase, StreamSchema schema) throws Exception {		
 		return schema.getTuple(jsonToAtributeMap(jbase, schema));
@@ -404,4 +407,20 @@ public class JSONToTupleConverter {
 		return attrmap;
 	}
 	
+	
+	private static Map<RString, Object> jsonMapToJavaMap(String name, Type attrType, Object childObj) throws Exception {
+		Map<RString, Object> jMap = new HashMap<>();
+		String cname = "map:" + name;
+		if(attrType instanceof MapType) {
+			MapType mapType = (MapType)attrType;
+			Type valueType = mapType.getValueType();
+			JSONObject jsonObj = (JSONObject)childObj;
+			for(String key : (Set<String>)jsonObj.keySet()) {
+				jMap.put(new RString(key), jsonToAttribute(cname, valueType, jsonObj.get(key), null));
+			}
+		}
+
+		
+		return jMap;
+	}
 }
