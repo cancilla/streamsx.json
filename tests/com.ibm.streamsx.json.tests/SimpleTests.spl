@@ -85,3 +85,38 @@ composite NullBasicTest {
 		
 }
 
+composite MapBasicTest {
+	type
+		InlineType = tuple<rstring x, int32 y>;
+		MyType = map<rstring, rstring> a, map<rstring, InlineType> b ;
+		
+	graph
+		stream<MyType> ExpectedS = Beacon() {
+			param
+				iterations : 1u;
+			output ExpectedS : a={"key1" : "testing"}, b={"key2" : {x = "testing", y = 42}};
+		}
+		stream<rstring jsonString> JsonS = Beacon() {
+			param
+				iterations : 1u;
+			output JsonS : jsonString = "{\"a\" : {\"key1\" : \"testing\"}, \"b\" : {\"key2\" : {\"x\" : \"testing\", \"y\" : 42}}}";
+		}
+		() as SinkOp = VerifierJTOT(JsonS; ExpectedS) {}
+}
+
+composite ListOfMapsTest {
+	type
+		MyType = list<map<rstring, rstring>> a;		
+	graph
+		stream<MyType> ExpectedS = Beacon() {
+			param
+				iterations : 1u;
+			output ExpectedS : a=[{"key1" : "testing"}, {"key2" : "testing2"}];
+		}
+		stream<rstring jsonString> JsonS = Beacon() {
+			param
+				iterations : 1u;
+			output JsonS : jsonString = "{\"a\" : [{\"key1\" : \"testing\"}, {\"key2\" : \"testing2\"}]}";
+		}
+		() as SinkOp = VerifierJTOT(JsonS; ExpectedS) {}
+}

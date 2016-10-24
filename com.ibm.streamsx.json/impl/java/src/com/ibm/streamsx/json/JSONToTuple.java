@@ -199,6 +199,6 @@ public class JSONToTuple extends AbstractOperator
 					" However, if they also exist in the JSON input, their assigned value will be of that specified in the JSON." +
 					" Null values in JSON arrays are ignored. Null values for all other attributes will result in default initializled output attributes. " +
 					" Limitations:" +
-					" BLOB, MAP and COMPLEX attribute types are not supported in the output tuple schema at this time and will be ignored."
+					" BLOB and COMPLEX attribute types are not supported in the output tuple schema at this time and will be ignored."
 					;
 }

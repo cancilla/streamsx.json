@@ -18,6 +18,7 @@ import com.ibm.streams.operator.Tuple;
 import com.ibm.streams.operator.Type;
 import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.logging.TraceLevel;
+import com.ibm.streams.operator.meta.BoundedType;
 import com.ibm.streams.operator.meta.CollectionType;
 import com.ibm.streams.operator.meta.MapType;
 import com.ibm.streams.operator.meta.TupleType;
@@ -123,11 +124,14 @@ public class JSONToTupleConverter {
 					return Timestamp.getTimestamp(((Number)jsonObj).doubleValue());
 				return Timestamp.getTimestamp(jsonObj.toString().isEmpty() ? 0 : Double.parseDouble(jsonObj.toString()));
 
+			case MAP:
+			case BMAP:
+			{
+				if(jsonObj instanceof JSONObject)
+					return jsonMapToSPLMap(name, type, jsonObj);
+			}
 				//TODO -- not yet supported types
 			case BLOB:
-			case MAP:
-				return jsonMapToJavaMap(name, type, jsonObj);
-			case BMAP:
 			case COMPLEX32:
 			case COMPLEX64:
 			default:
@@ -408,18 +412,16 @@ public class JSONToTupleConverter {
 	}
 	
 	
-	private static Map<RString, Object> jsonMapToJavaMap(String name, Type attrType, Object childObj) throws Exception {
+	private static Map<RString, Object> jsonMapToSPLMap(String name, Type attrType, Object childObj) throws Exception {
 		Map<RString, Object> jMap = new HashMap<>();
 		String cname = "map:" + name;
 		if(attrType instanceof MapType) {
-			MapType mapType = (MapType)attrType;
-			Type valueType = mapType.getValueType();
+			Type valueType = ((MapType)attrType).getValueType();
 			JSONObject jsonObj = (JSONObject)childObj;
 			for(String key : (Set<String>)jsonObj.keySet()) {
 				jMap.put(new RString(key), jsonToAttribute(cname, valueType, jsonObj.get(key), null));
 			}
 		}
-
 		
 		return jMap;
 	}
